@@ -89,8 +89,15 @@ def test_sort_basic_pushes_elements_without_coordinates_to_the_end(missing_coord
         [("x", 0), (10, 10), (10, 0), (0, 0)],
     ],
 )
+@pytest.mark.parametrize(
+    "missing_points",
+    [None, ()],
+    ids=["no-coordinate-metadata", "empty-points"],
+)
 @pytest.mark.parametrize("unusable_first", [True, False])
-def test_sort_basic_keeps_pages_with_mixed_unusable_coordinates(unusable_points, unusable_first):
+def test_sort_basic_keeps_pages_with_mixed_unusable_coordinates(
+    unusable_points, missing_points, unusable_first
+):
     # -- basic sorting promises not to drop or fail on an element it cannot place: a page that
     # -- mixes a missing coordinate with a malformed one must still sort and keep everything --
     elements = []
@@ -107,7 +114,11 @@ def test_sort_basic_keeps_pages_with_mixed_unusable_coordinates(unusable_points,
     elements.append(unusable)
 
     coordinate_less = Text("no coordinates")
-    coordinate_less.metadata.coordinates = None
+    # -- both ways an element arrives without a usable position: no coordinate metadata at all,
+    # -- and coordinate metadata that carries no points --
+    coordinate_less.metadata.coordinates = (
+        None if missing_points is None else CoordinatesMetadata(missing_points, PixelSpace)
+    )
     elements[-1:-1] = [coordinate_less] if unusable_first else []
     if not unusable_first:
         elements.append(coordinate_less)
